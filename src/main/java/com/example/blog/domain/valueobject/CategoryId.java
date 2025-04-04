@@ -14,4 +14,8 @@ public record CategoryId(UUID id) {
         this(UUID.randomUUID());
     }
 
+    public static CategoryId fromUUID(UUID id) {
+        return new CategoryId(id);
+    }
+
 }
