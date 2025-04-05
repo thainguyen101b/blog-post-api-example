@@ -8,4 +8,9 @@ public interface CategoryRepository {
 
     List<Category> findCategoryByIds(List<CategoryId> ids);
 
+    void save(Category category);
+
+    boolean existByName(String name);
+
+    Category findById(CategoryId categoryId);
 }

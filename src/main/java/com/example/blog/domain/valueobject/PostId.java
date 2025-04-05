@@ -14,4 +14,8 @@ public record PostId(UUID id) {
         this(UUID.randomUUID());
     }
 
+    public static PostId fromUUID(UUID uuid) {
+        return new PostId(uuid);
+    }
+
 }
