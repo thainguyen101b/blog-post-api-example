@@ -3,15 +3,14 @@ package com.example.blog.domain;
 import com.example.blog.domain.exception.CategoryAlreadyExistsException;
 import com.example.blog.domain.exception.PostAlreadyDeletedException;
 import com.example.blog.domain.valueobject.Author;
+import com.example.blog.domain.valueobject.CategoryId;
 import com.example.blog.domain.valueobject.CommentId;
 import com.example.blog.domain.valueobject.PostId;
 import lombok.Getter;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Getter
 public class Post {
@@ -24,6 +23,20 @@ public class Post {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+
+    private Post(PostId id, String title, String content, Author author,
+          List<Category> cats, List<Comment> comments,
+          LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.author = author;
+        this.categories.addAll(Objects.requireNonNullElseGet(cats, ArrayList::new));
+        this.comments.addAll(Objects.requireNonNullElseGet(comments, ArrayList::new));
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.deletedAt = deletedAt;
+    }
 
     public Post(String title, String content, Author author, Category ... cats) {
         Assert.notNull(title, "title must not be null");
@@ -42,13 +55,10 @@ public class Post {
         this.deletedAt = null;
     }
 
-    private void addCategory(Category cat) {
-        boolean isDuplicate = categories.stream()
-                .anyMatch(c -> c.getName().equals(cat.getName()));
-        if (isDuplicate) {
-            throw new CategoryAlreadyExistsException(cat.getName());
-        }
-        categories.add(cat);
+    public static Post reconstitute(PostId id, String title, String content, Author author,
+                                    List<Category> cats, List<Comment> comments,
+                                    LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+        return new Post(id, title, content, author, cats, comments, createdAt, updatedAt, deletedAt);
     }
 
     public Post updatePost(String title, String content) {
@@ -87,7 +97,7 @@ public class Post {
         if (isDeleted()) {
             throw new PostAlreadyDeletedException(id);
         }
-        Assert.notNull(commentId, "commentId must not be null");
+
         Comment commentToRemove = getComment(commentId);
         if (commentToRemove != null) {
             comments.remove(commentToRemove);
@@ -111,6 +121,43 @@ public class Post {
         Comment comment = getComment(commentId);
         if (comment != null)
             comment.cancelApproval();
+    }
+
+    public void addCategory(Category category) {
+        if (isDeleted()) {
+            throw new PostAlreadyDeletedException(id);
+        }
+
+        boolean isDuplicate = categories.stream()
+                .anyMatch(c -> c.getName().equals(category.getName()));
+        if (isDuplicate) {
+            throw new CategoryAlreadyExistsException(category.getName());
+        }
+
+        Assert.notNull(category, "category must not be null");
+        categories.add(category);
+    }
+
+    public void removeCategory(CategoryId categoryId) {
+        if (isDeleted()) {
+            throw new PostAlreadyDeletedException(id);
+        }
+
+        Category category = getCategory(categoryId);
+        if (category != null)
+            categories.remove(category);
+    }
+
+    public Category getCategory(CategoryId categoryId) {
+        Assert.notNull(categoryId, "categoryId must not be null");
+        return this.categories.stream()
+                .filter(c -> c.getId().equals(categoryId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<CategoryId> getCategoryIds() {
+        return categories.stream().map(Category::getId).toList();
     }
 
     public Comment getComment(CommentId commentId) {

@@ -17,6 +17,15 @@ public class Category {
         this.name = name;
     }
 
+    Category(CategoryId id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public static Category reconstitute(CategoryId id, String name) {
+        return new Category(id, name);
+    }
+
     public Category updateCategory(String newName) {
         Assert.notNull(newName, "category name must not be null");
         this.name = newName;
