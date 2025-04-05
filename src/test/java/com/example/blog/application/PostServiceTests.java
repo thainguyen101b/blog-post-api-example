@@ -23,8 +23,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Create Post Use Case Tests")
-class CreatePostUseCaseTests {
+@DisplayName("Post Service Tests")
+class PostServiceTests {
 
     @Mock
     private PostRepository postRepository;
@@ -33,7 +33,7 @@ class CreatePostUseCaseTests {
     private CategoryRepository categoryRepository;
 
     @InjectMocks
-    private CreatePostUseCase useCase;
+    private PostService service;
 
     @Captor
     private ArgumentCaptor<Post> postCaptor;
@@ -52,7 +52,7 @@ class CreatePostUseCaseTests {
 
     @Test
     @DisplayName("Should create post successfully when valid categoryIds provided")
-    void execute_validCategoryIds_Success() {
+    void createPost_validCategoryIds_Success() {
         // Arrange
         UUID category1Uuid = UUID.randomUUID();
         UUID category2Uuid = UUID.randomUUID();
@@ -79,7 +79,7 @@ class CreatePostUseCaseTests {
         when(categoryRepository.findCategoryByIds(expectedCategoryIdsToSearch)).thenReturn(foundCategories);
 
         // Act
-        useCase.execute(command);
+        service.createPost(command);
 
         // Assert
         verify(categoryRepository, times(1)).findCategoryByIds(categoryIdListCaptor.capture());
@@ -101,7 +101,7 @@ class CreatePostUseCaseTests {
 
     @Test
     @DisplayName("Should throw CategoryNotFoundException when an invalid Category ID is provided")
-    void execute_invalidCategoryIds_ShouldThrowCategoryNotFoundException() {
+    void createPost_invalidCategoryIds_ShouldThrowCategoryNotFoundException() {
         // Arrange
         UUID existingUuid = UUID.randomUUID();
         UUID nonExistingUuid = UUID.randomUUID();
@@ -126,7 +126,7 @@ class CreatePostUseCaseTests {
         when(categoryRepository.findCategoryByIds(expectedCategoryIdsToSearch)).thenReturn(foundCategories);
 
         // Act & Assert
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> service.createPost(command))
                 .isInstanceOf(CategoryNotFoundException.class);
 
         verify(postRepository, never()).save(any(Post.class));

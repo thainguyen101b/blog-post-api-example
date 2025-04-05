@@ -12,12 +12,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class CreatePostUseCase {
+public class PostService {
 
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
 
-    public void execute(PostCreateCommand command) {
+    public void createPost(PostCreateCommand command) {
         // Extract categories in PostCreateCommand to a list of CategoryId
         List<CategoryId> categoryIds = command.categoryIds().stream()
                 .map(CategoryId::fromUUID)
