@@ -5,6 +5,7 @@ import com.example.blog.domain.Comment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants.ComponentModel;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = ComponentModel.SPRING)
 public interface CommentMapper {
@@ -14,6 +15,7 @@ public interface CommentMapper {
     @Mapping(target = "isApproved", source = "comment", qualifiedByName = "mapIsApproved")
     PostDTO.CommentDTO toDto(Comment comment);
 
+    @Named("mapIsApproved")
     default boolean mapIsApproved(Comment comment) {
         return comment != null && comment.isApproved();
     }
