@@ -21,20 +21,24 @@ public class Post {
     private final List<Category> categories = new ArrayList<>();
     private final List<Comment> comments = new ArrayList<>();
     private final LocalDateTime createdAt;
+    private String slug;
+    private LocalDateTime publishedAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
-    private Post(PostId id, String title, String content, Author author,
+    private Post(PostId id, String title, String slug, String content, Author author,
           List<Category> cats, List<Comment> comments,
-          LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+          LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime publishedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.title = title;
+        this.slug = slug;
         this.content = content;
         this.author = author;
         this.categories.addAll(Objects.requireNonNullElseGet(cats, ArrayList::new));
         this.comments.addAll(Objects.requireNonNullElseGet(comments, ArrayList::new));
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.publishedAt = publishedAt;
         this.deletedAt = deletedAt;
     }
 
@@ -50,15 +54,17 @@ public class Post {
         for (Category cat : cats) {
             addCategory(cat);
         }
+        this.slug = generateSlug(this.title);
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.publishedAt = null;
         this.deletedAt = null;
     }
 
-    public static Post reconstitute(PostId id, String title, String content, Author author,
+    public static Post reconstitute(PostId id, String title, String slug, String content, Author author,
                                     List<Category> cats, List<Comment> comments,
-                                    LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        return new Post(id, title, content, author, cats, comments, createdAt, updatedAt, deletedAt);
+                                    LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime publishedAt, LocalDateTime deletedAt) {
+        return new Post(id, title, slug, content, author, cats, comments, createdAt, updatedAt, publishedAt, deletedAt);
     }
 
     public Post updatePost(String title, String content) {
@@ -71,6 +77,7 @@ public class Post {
 
         this.title = title;
         this.content = content;
+        this.slug = generateSlug(this.title);
         this.updatedAt = LocalDateTime.now();
         return this;
     }
@@ -176,4 +183,10 @@ public class Post {
         return Collections.unmodifiableList(categories);
     }
 
+    public static String generateSlug(String title) {
+        return title.toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("-+", "-")
+                .trim();
+    }
 }

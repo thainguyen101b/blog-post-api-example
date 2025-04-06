@@ -80,9 +80,9 @@ class PostServiceTests {
         category3 = Category.reconstitute(categoryId3, "Spring");
         category4 = Category.reconstitute(categoryId4, "New Category");
 
-        existingPost = Post.reconstitute(postId, "Initial Title", "Initial Content", author,
+        existingPost = Post.reconstitute(postId, "Initial Title", Post.generateSlug("Initial Title"), "Initial Content", author,
                 List.of(category1, category2), null,
-                createdAt, updatedAt, null);
+                createdAt, updatedAt, null, null);
     }
 
     @Test
