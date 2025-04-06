@@ -1,7 +1,6 @@
 package com.example.blog.domain;
 
-import com.example.blog.domain.exception.CategoryAlreadyExistsException;
-import com.example.blog.domain.exception.PostAlreadyDeletedException;
+import com.example.blog.domain.exception.*;
 import com.example.blog.domain.valueobject.Author;
 import com.example.blog.domain.valueobject.CategoryId;
 import com.example.blog.domain.valueobject.CommentId;
@@ -72,6 +71,10 @@ public class Post {
             throw new PostAlreadyDeletedException(id);
         }
 
+        if (isPublished()) {
+            throw new PostAlreadyPublishedException(id);
+        }
+
         Assert.notNull(title, "title must not be null");
         Assert.notNull(content, "content must not be null");
 
@@ -82,18 +85,29 @@ public class Post {
         return this;
     }
 
+    public void publishPost() {
+        if (isDeleted()) {
+            throw new PostAlreadyDeletedException(id);
+        }
+        this.publishedAt = LocalDateTime.now();
+    }
+
+    public void unPublishPost() {
+        this.publishedAt = null;
+    }
+
     public void softDelete() {
+        if (isPublished()) {
+            throw new PostAlreadyPublishedException(id);
+        }
+
         deletedAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-    public boolean isDeleted() {
-        return deletedAt != null;
-    }
-
     public void addComment(Comment comment) {
-        if (isDeleted()) {
-            throw new PostAlreadyDeletedException(id);
+        if (!isPublished()) {
+            throw new PostNotPublishedException(id);
         }
 
         Assert.notNull(comment, "comment must not be null");
@@ -101,8 +115,8 @@ public class Post {
     }
 
     public void removeComment(CommentId commentId) {
-        if (isDeleted()) {
-            throw new PostAlreadyDeletedException(id);
+        if (!isPublished()) {
+            throw new PostNotPublishedException(id);
         }
 
         Comment commentToRemove = getComment(commentId);
@@ -112,8 +126,8 @@ public class Post {
     }
 
     public void approveComment(CommentId commentId) {
-        if (isDeleted()) {
-            throw new PostAlreadyDeletedException(id);
+        if (!isPublished()) {
+            throw new PostNotPublishedException(id);
         }
         Comment comment = getComment(commentId);
         if (comment != null)
@@ -121,8 +135,8 @@ public class Post {
     }
 
     public void cancelApprovalComment(CommentId commentId) {
-        if (isDeleted()) {
-            throw new PostAlreadyDeletedException(id);
+        if (!isPublished()) {
+            throw new PostNotPublishedException(id);
         }
 
         Comment comment = getComment(commentId);
@@ -130,30 +144,9 @@ public class Post {
             comment.cancelApproval();
     }
 
-    public void addCategory(Category category) {
-        if (isDeleted()) {
-            throw new PostAlreadyDeletedException(id);
-        }
-
-        boolean isDuplicate = categories.stream()
-                .anyMatch(c -> c.getName().equals(category.getName()));
-        if (isDuplicate) {
-            throw new CategoryAlreadyExistsException(category.getName());
-        }
-
-        Assert.notNull(category, "category must not be null");
-        categories.add(category);
-    }
-
-    public void removeCategory(CategoryId categoryId) {
-        if (isDeleted()) {
-            throw new PostAlreadyDeletedException(id);
-        }
-
-        Category category = getCategory(categoryId);
-        if (category != null)
-            categories.remove(category);
-    }
+    /*
+    * ==== READ ====
+    * */
 
     public Category getCategory(CategoryId categoryId) {
         Assert.notNull(categoryId, "categoryId must not be null");
@@ -181,6 +174,14 @@ public class Post {
 
     public List<Category> getCategories() {
         return Collections.unmodifiableList(categories);
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    public boolean isPublished() {
+        return publishedAt != null;
     }
 
     public static String generateSlug(String title) {
