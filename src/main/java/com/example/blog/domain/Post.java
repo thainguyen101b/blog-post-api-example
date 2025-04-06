@@ -85,6 +85,31 @@ public class Post {
         return this;
     }
 
+    public void addCategory(Category category) {
+        if (isCategoryUpdatable()) {
+            boolean isDuplicate = categories.stream()
+                    .anyMatch(c -> c.getName().equals(category.getName()));
+            if (isDuplicate) {
+                throw new CategoryAlreadyExistsException(category.getName());
+            }
+
+            Assert.notNull(category, "category must not be null");
+            categories.add(category);
+        } else {
+            throw new CannotChangeCategoryException(id);
+        }
+    }
+
+    public void removeCategory(CategoryId categoryId) {
+        if (isCategoryUpdatable()) {
+            Category category = getCategory(categoryId);
+            if (category != null)
+                categories.remove(category);
+        } else {
+            throw new CannotChangeCategoryException(id);
+        }
+    }
+
     public void publishPost() {
         if (isDeleted()) {
             throw new PostAlreadyDeletedException(id);
@@ -182,6 +207,10 @@ public class Post {
 
     public boolean isPublished() {
         return publishedAt != null;
+    }
+
+    public boolean isCategoryUpdatable() {
+        return !isPublished();
     }
 
     public static String generateSlug(String title) {

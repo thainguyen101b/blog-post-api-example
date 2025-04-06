@@ -21,14 +21,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class PostTests {
 
     private Author author;
+    private CategoryId categoryId1;
+    private CategoryId categoryId2;
     private Category category1;
     private Category category2;
 
     @BeforeEach
     void setUp() {
         author = new Author("Test Author");
-        category1 = new Category("Tech");
-        category2 = new Category("News");
+        categoryId1 = new CategoryId();
+        categoryId2 = new CategoryId();
+        category1 = Category.reconstitute(categoryId1, "Tech");
+        category2 = Category.reconstitute(categoryId2, "News");
     }
 
     @Test
@@ -174,6 +178,84 @@ class PostTests {
 
         // Act
         assertThrows(PostAlreadyDeletedException.class, post::publishPost);
+    }
+
+    // add category
+    @Test
+    @DisplayName("Should add Category successfully")
+    void testAddCategory_Success() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1);
+        assertEquals(1, post.getCategories().size());
+
+        Category category = new Category("New Category");
+
+        // Act
+        post.addCategory(category);
+
+        assertEquals(2, post.getCategories().size());
+        assertThat(post.getCategories()).containsExactlyInAnyOrder(category1, category);
+    }
+
+    @Test
+    @DisplayName("Should throw CategoryAlreadyExistsException when the specified category's name already exists")
+    void testAddCategory_ValidCategoryName_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1);
+        assertEquals(1, post.getCategories().size());
+
+        Category category = new Category(category1.getName());
+
+        // Act & Assert
+        assertThrows(CategoryAlreadyExistsException.class, () -> post.addCategory(category));
+    }
+
+    @Test
+    @DisplayName("Should throw CannotChangeCategoryException when add a Category to a published post")
+    void testAddCategory_PublishedPost_ThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1);
+        post.publishPost();
+
+        // Act & Assert
+        Category category = new Category(category1.getName());
+        assertThrows(CannotChangeCategoryException.class, () -> post.addCategory(category));
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when the new category to add is null")
+    void testAddCategory_NullCategory_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> post.addCategory(null));
+    }
+
+    @Test
+    @DisplayName("Should remove Category successfully")
+    void testRemoveCategory_Success() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1, category2);
+
+        assertEquals(2, post.getCategories().size());
+
+        // Act
+        post.removeCategory(categoryId1);
+
+        // Assert
+        assertEquals(1, post.getCategories().size());
+        assertThat(post.getCategories()).containsExactlyInAnyOrder(category2);
+    }
+
+    @Test
+    void testRemoveCategory_PublishedPost_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1, category2);
+        post.publishPost();
+
+        // Act & Assert
+        assertThrows(CannotChangeCategoryException.class, () -> post.removeCategory(categoryId1));
     }
 
     @Test
