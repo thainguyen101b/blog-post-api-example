@@ -1,5 +1,6 @@
 package com.example.blog.domain;
 
+import com.example.blog.domain.valueobject.CategoryId;
 import com.example.blog.utils.Page;
 import com.example.blog.domain.valueobject.PostId;
 
@@ -9,9 +10,9 @@ public interface PostRepository {
 
     void save(Post post);
 
-    void delete(Post post);
-
     Page<Post> search(String keyword, int page, int size);
 
     Page<Post> findAll(int page, int size);
+
+    boolean existsByCategory(CategoryId categoryId);
 }
