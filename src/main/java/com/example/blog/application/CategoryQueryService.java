@@ -1,7 +1,7 @@
 package com.example.blog.application;
 
 import com.example.blog.application.query.PostDTO;
-import com.example.blog.application.query.mapper.CategoryMapper;
+import com.example.blog.utils.mapper.CategoryMapper;
 import com.example.blog.domain.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 

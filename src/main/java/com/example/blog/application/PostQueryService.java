@@ -1,7 +1,7 @@
 package com.example.blog.application;
 
 import com.example.blog.application.query.PostDTO;
-import com.example.blog.application.query.mapper.PostMapper;
+import com.example.blog.utils.mapper.PostMapper;
 import com.example.blog.utils.Page;
 import com.example.blog.domain.Post;
 import com.example.blog.domain.PostRepository;
