@@ -1,10 +1,12 @@
 package com.example.blog.domain;
 
-import com.example.blog.domain.exception.CategoryAlreadyExistsException;
-import com.example.blog.domain.exception.PostAlreadyDeletedException;
+// NOTE: Only import from domain package
+import com.example.blog.domain.exception.*;
 import com.example.blog.domain.valueobject.Author;
+import com.example.blog.domain.valueobject.CategoryId;
 import com.example.blog.domain.valueobject.CommentId;
 import com.example.blog.domain.valueobject.Commenter;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +21,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class PostTests {
 
     private Author author;
+    private CategoryId categoryId1;
+    private CategoryId categoryId2;
     private Category category1;
     private Category category2;
 
     @BeforeEach
     void setUp() {
         author = new Author("Test Author");
-        category1 = new Category("Tech");
-        category2 = new Category("News");
+        categoryId1 = new CategoryId();
+        categoryId2 = new CategoryId();
+        category1 = Category.reconstitute(categoryId1, "Tech");
+        category2 = Category.reconstitute(categoryId2, "News");
     }
 
+    // ===== Create Post =====
     @Test
     @DisplayName("Should create post successfully with categories")
     void testCreatePost_Success() {
@@ -82,6 +89,7 @@ class PostTests {
                 () -> new Post("Title", "Content", author, cat1, cat2));
     }
 
+    // ===== Update Post =====
     @Test
     @DisplayName("Should update post successfully")
     void testUpdatePost_Success() {
@@ -134,6 +142,128 @@ class PostTests {
     }
 
     @Test
+    @DisplayName("Should throw exception when updating a published post")
+    void testUpdatePost_WhenPublished_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+        post.publishPost();
+
+        // Act & Assert
+        assertThrows(PostAlreadyPublishedException.class,
+                () -> post.updatePost("New Title", "New Content"));
+    }
+
+    // ===== Publish Post =====
+    @Test
+    @DisplayName("Should publish post successfully")
+    void testPublishPost_Success() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+
+        // Act
+        post.publishPost();
+
+        // Assert
+        assertTrue(post.isPublished());
+        assertFalse(post.isDeleted());
+        assertFalse(post.isCategoryUpdatable());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when publish a deleted post")
+    void testPublishPost_WhenDeleted_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+        post.softDelete();
+
+        assertTrue(post.isDeleted());
+        assertFalse(post.isPublished());
+
+        // Act
+        assertThrows(PostAlreadyDeletedException.class, post::publishPost);
+    }
+
+    // ===== Add Category =====
+    @Test
+    @DisplayName("Should add Category successfully")
+    void testAddCategory_Success() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1);
+        assertEquals(1, post.getCategories().size());
+
+        Category category = new Category("New Category");
+
+        // Act
+        post.addCategory(category);
+
+        assertEquals(2, post.getCategories().size());
+        assertThat(post.getCategories()).containsExactlyInAnyOrder(category1, category);
+    }
+
+    @Test
+    @DisplayName("Should throw CategoryAlreadyExistsException when the specified category's name already exists")
+    void testAddCategory_ValidCategoryName_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1);
+        assertEquals(1, post.getCategories().size());
+
+        Category category = new Category(category1.getName());
+
+        // Act & Assert
+        assertThrows(CategoryAlreadyExistsException.class, () -> post.addCategory(category));
+    }
+
+    @Test
+    @DisplayName("Should throw CannotChangeCategoryException when add a Category to a published post")
+    void testAddCategory_PublishedPost_ThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1);
+        post.publishPost();
+
+        // Act & Assert
+        Category category = new Category(category1.getName());
+        assertThrows(CannotChangeCategoryException.class, () -> post.addCategory(category));
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when the new category to add is null")
+    void testAddCategory_NullCategory_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> post.addCategory(null));
+    }
+
+    // ===== Remove Category =====
+    @Test
+    @DisplayName("Should remove Category successfully")
+    void testRemoveCategory_Success() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1, category2);
+
+        assertEquals(2, post.getCategories().size());
+
+        // Act
+        post.removeCategory(categoryId2);
+
+        // Assert
+        assertEquals(1, post.getCategories().size());
+        assertThat(post.getCategories()).containsExactlyInAnyOrder(category1);
+    }
+
+    @Test
+    void testRemoveCategory_PublishedPost_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author, category1, category2);
+        post.publishPost();
+
+        // Act & Assert
+        assertThrows(CannotChangeCategoryException.class, () -> post.removeCategory(categoryId1));
+    }
+
+    // ===== Soft Delete Post =====
+    @Test
     @DisplayName("Should soft delete post successfully")
     void testSoftDelete_Success() {
         // Arrange
@@ -155,11 +285,25 @@ class PostTests {
     }
 
     @Test
+    @DisplayName("Should throw exception when soft delete a published post")
+    void testSoftDelete_WhenPostAlreadyPublished_ThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+        post.publishPost();
+
+        // Act & Assert
+        assertThrows(PostAlreadyPublishedException.class, post::softDelete);
+    }
+
+    // ===== Add Comment =====
+    @Test
     @DisplayName("Should add comment successfully")
     void testAddComment_Success() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("My comment", new Commenter("User1"));
+
+        post.publishPost();
 
         // Act
         post.addComment(comment);
@@ -170,30 +314,36 @@ class PostTests {
     }
 
     @Test
-    @DisplayName("Should throw exception when adding null comment")
-    void testAddComment_NullComment_ShouldThrowException() {
+    @DisplayName("Should throw CannotAddCommentException when add a comment to unpublish post")
+    void testAddComment_UnpublishedPost_ShouldThrowException() {
         Post post = new Post("Title", "Content", author);
-        assertThrows(IllegalArgumentException.class, () -> post.addComment(null));
-    }
-
-    @Test
-    @DisplayName("Should throw exception when adding comment to a deleted post")
-    void testAddComment_WhenDeleted_ShouldThrowException() {
-        // Arrange
-        Post post = new Post("Title", "Content", author);
-        post.softDelete();
         Comment comment = new Comment("My comment", new Commenter("User1"));
 
         // Act & Assert
-        assertThrows(PostAlreadyDeletedException.class, () -> post.addComment(comment));
+        assertThrows(PostNotPublishedException.class, () -> post.addComment(comment));
     }
 
+    @Test
+    @DisplayName("Should throw exception when adding null comment")
+    void testAddComment_NullComment_ShouldThrowException() {
+        // Arrange
+        Post post = new Post("Title", "Content", author);
+        post.publishPost();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> post.addComment(null));
+    }
+
+    // ===== Remove Comment =====
     @Test
     @DisplayName("Should remove comment successfully")
     void testRemoveComment_Success() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("My comment", new Commenter("User1"));
+
+        post.publishPost();
+
         post.addComment(comment);
         assertEquals(1, post.getComments().size());
 
@@ -207,30 +357,41 @@ class PostTests {
     @Test
     @DisplayName("Should throw exception when removing null comment id")
     void testRemoveComment_NullComment_ShouldThrowException() {
+        // Arrange
         Post post = new Post("Title", "Content", author);
+        post.publishPost();
+
+        // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> post.removeComment(null));
     }
 
     @Test
-    @DisplayName("Should throw exception when removing comment from a deleted post")
-    void testRemoveComment_WhenDeleted_ShouldThrowException() {
+    @DisplayName("Should throw exception when removing comment from a un published post")
+    void testRemoveComment_WhenUnpublished_ShouldThrowException() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("My comment", new Commenter("User1"));
-        post.addComment(comment);
-        post.softDelete();
 
+        post.publishPost();
+
+        post.addComment(comment);
+
+        post.unPublishPost();
 
         // Act & Assert
-        assertThrows(PostAlreadyDeletedException.class, () -> post.removeComment(comment.getId()));
+        assertThrows(PostNotPublishedException.class, () -> post.removeComment(comment.getId()));
     }
 
+    // ===== Approve Comment =====
     @Test
-    @DisplayName("Should approve comment successfully")
+    @DisplayName("Should approve comment successfully when post already published")
     void testApproveComment_Success() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("Comment to approve", new Commenter("User1"));
+
+        post.publishPost();
+
         post.addComment(comment);
         CommentId commentId = comment.getId();
 
@@ -244,17 +405,21 @@ class PostTests {
     }
 
     @Test
-    @DisplayName("Should throw exception when approving comment on a deleted post")
-    void testApproveComment_WhenDeleted_ShouldThrowException() {
+    @DisplayName("Should throw exception when approving comment on a un publish post")
+    void testApproveComment_WhenUnPublished_ShouldThrowException() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("Comment", new Commenter("User1"));
+
+        post.publishPost();
+
         post.addComment(comment);
         CommentId commentId = comment.getId();
-        post.softDelete();
+
+        post.unPublishPost();
 
         // Act & Assert
-        assertThrows(PostAlreadyDeletedException.class, () -> post.approveComment(commentId));
+        assertThrows(PostNotPublishedException.class, () -> post.approveComment(commentId));
     }
 
     @Test
@@ -262,6 +427,8 @@ class PostTests {
     void testApproveComment_NotFound() {
         // Arrange
         Post post = new Post("Title", "Content", author);
+        post.publishPost();
+
         CommentId nonExistentCommentId = new CommentId(); // ID non exist
 
         // Act
@@ -271,14 +438,19 @@ class PostTests {
         assertDoesNotThrow(action);
     }
 
+    // ===== Cancel Approval Comment =====
     @Test
     @DisplayName("Should cancel comment approval successfully")
     void testCancelApprovalComment_Success() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("Comment", new Commenter("User1"));
+
+        post.publishPost();
+
         post.addComment(comment);
         CommentId commentId = comment.getId();
+
         post.approveComment(commentId); // Approve first
         assertTrue(post.getComment(commentId).isApproved());
 
@@ -292,18 +464,23 @@ class PostTests {
     }
 
     @Test
-    @DisplayName("Should throw exception when cancelling approval on a deleted post")
-    void testCancelApprovalComment_WhenDeleted_ShouldThrowException() {
+    @DisplayName("Should throw exception when cancelling approval on a un published post")
+    void testCancelApprovalComment_WhenUnpublished_ShouldThrowException() {
         // Arrange
         Post post = new Post("Title", "Content", author);
         Comment comment = new Comment("Comment", new Commenter("User1"));
+
+        post.publishPost();
+
         post.addComment(comment);
+
         CommentId commentId = comment.getId();
         post.approveComment(commentId);
-        post.softDelete();
+
+        post.unPublishPost();
 
         // Act & Assert
-        assertThrows(PostAlreadyDeletedException.class, () -> post.cancelApprovalComment(commentId));
+        assertThrows(PostNotPublishedException.class, () -> post.cancelApprovalComment(commentId));
     }
 
     @Test
@@ -311,6 +488,7 @@ class PostTests {
     void testCancelApprovalComment_NotFound() {
         // Arrange
         Post post = new Post("Title", "Content", author);
+        post.publishPost();
         CommentId nonExistentCommentId = new CommentId();
 
         // Act
