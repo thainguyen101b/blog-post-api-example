@@ -1,5 +1,6 @@
 package com.example.blog.domain;
 
+import com.example.blog.utils.Page;
 import com.example.blog.domain.valueobject.PostId;
 
 public interface PostRepository {
@@ -10,4 +11,7 @@ public interface PostRepository {
 
     void delete(Post post);
 
+    Page<Post> search(String keyword, int page, int size);
+
+    Page<Post> findAll(int page, int size);
 }
