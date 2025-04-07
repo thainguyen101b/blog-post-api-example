@@ -7,6 +7,7 @@ import com.example.blog.domain.Category;
 import com.example.blog.domain.CategoryRepository;
 import com.example.blog.domain.Post;
 import com.example.blog.domain.PostRepository;
+import com.example.blog.domain.exception.PostAlreadyPublishedException;
 import com.example.blog.domain.valueobject.Author;
 import com.example.blog.domain.valueobject.CategoryId;
 import com.example.blog.domain.valueobject.PostId;
@@ -50,11 +51,12 @@ class PostServiceTests {
     private UUID postIdUUID;
     private PostId postId;
     private Post existingPost;
-    private Category category1, category2, category3, category4;
+    private Category category3;
+    private Category category4;
     private CategoryId categoryId1, categoryId2, categoryId3, categoryId4;
-    private UUID categoryUUID1, categoryUUID2, categoryUUID3, categoryUUID4;
-    private LocalDateTime createdAt = LocalDateTime.of(2025, 4, 15, 11, 30, 0);
-    private LocalDateTime updatedAt = LocalDateTime.of(2025, 4, 15, 11, 45, 0);
+    private UUID categoryUUID2;
+    private UUID categoryUUID3;
+    private UUID categoryUUID4;
 
     @BeforeEach
     void setUp() {
@@ -65,7 +67,7 @@ class PostServiceTests {
         // common for update test
         postIdUUID = UUID.randomUUID();
         postId = PostId.fromUUID(postIdUUID);
-        categoryUUID1 = UUID.randomUUID();
+        UUID categoryUUID1 = UUID.randomUUID();
         categoryUUID2 = UUID.randomUUID();
         categoryUUID3 = UUID.randomUUID();
         categoryUUID4 = UUID.randomUUID();
@@ -75,10 +77,13 @@ class PostServiceTests {
         categoryId3 = CategoryId.fromUUID(categoryUUID3);
         categoryId4 = CategoryId.fromUUID(categoryUUID4);
 
-        category1 = Category.reconstitute(categoryId1, "Tech");
-        category2 = Category.reconstitute(categoryId2, "Java");
+        Category category1 = Category.reconstitute(categoryId1, "Tech");
+        Category category2 = Category.reconstitute(categoryId2, "Java");
         category3 = Category.reconstitute(categoryId3, "Spring");
         category4 = Category.reconstitute(categoryId4, "New Category");
+
+        LocalDateTime createdAt = LocalDateTime.of(2025, 4, 15, 11, 30, 0);
+        LocalDateTime updatedAt = LocalDateTime.of(2025, 4, 15, 11, 45, 0);
 
         existingPost = Post.reconstitute(postId, "Initial Title", Post.generateSlug("Initial Title"), "Initial Content", author,
                 List.of(category1, category2), null,
@@ -239,4 +244,31 @@ class PostServiceTests {
         verify(postRepository, never()).save(any(Post.class));
     }
 
+    @Test
+    @DisplayName("Should soft delete Post successfully")
+    void softDeletePost_Success() {
+        // Arrange
+        when(postRepository.findById(postId)).thenReturn(existingPost);
+
+        // Act
+        service.deletePost(postIdUUID);
+
+        // Assert
+        verify(postRepository, times(1)).findById(postId);
+        verify(postRepository, times(1)).save(postCaptor.capture());
+        Post deletedPost = postCaptor.getValue();
+        assertThat(deletedPost.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should throw PostAlreadyPublishedException when soft delete a published Post")
+    void softDeletePost_PublishedPost_ThrowException() {
+        // Arrange
+        existingPost.publishPost();
+        when(postRepository.findById(postId)).thenReturn(existingPost);
+
+        // Act & Assert
+        assertThatThrownBy(() -> service.deletePost(postIdUUID))
+                .isInstanceOf(PostAlreadyPublishedException.class);
+    }
 }

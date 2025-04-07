@@ -70,6 +70,12 @@ public class PostService {
         postRepository.save(post);
     }
 
+    public void deletePost(UUID id) {
+        Post post = postRepository.findById(PostId.fromUUID(id));
+        post.softDelete();
+        postRepository.save(post);
+    }
+
     private void validateCategories(List<Category> existingCategories, List<CategoryId> categoryIds) {
         // transform list of Category to set of CategoryId
         Set<CategoryId> existingSet = existingCategories.stream()

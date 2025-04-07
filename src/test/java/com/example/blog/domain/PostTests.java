@@ -35,6 +35,7 @@ class PostTests {
         category2 = Category.reconstitute(categoryId2, "News");
     }
 
+    // ===== Create Post =====
     @Test
     @DisplayName("Should create post successfully with categories")
     void testCreatePost_Success() {
@@ -88,6 +89,7 @@ class PostTests {
                 () -> new Post("Title", "Content", author, cat1, cat2));
     }
 
+    // ===== Update Post =====
     @Test
     @DisplayName("Should update post successfully")
     void testUpdatePost_Success() {
@@ -151,6 +153,7 @@ class PostTests {
                 () -> post.updatePost("New Title", "New Content"));
     }
 
+    // ===== Publish Post =====
     @Test
     @DisplayName("Should publish post successfully")
     void testPublishPost_Success() {
@@ -180,7 +183,7 @@ class PostTests {
         assertThrows(PostAlreadyDeletedException.class, post::publishPost);
     }
 
-    // add category
+    // ===== Add Category =====
     @Test
     @DisplayName("Should add Category successfully")
     void testAddCategory_Success() {
@@ -232,6 +235,7 @@ class PostTests {
         assertThrows(IllegalArgumentException.class, () -> post.addCategory(null));
     }
 
+    // ===== Remove Category =====
     @Test
     @DisplayName("Should remove Category successfully")
     void testRemoveCategory_Success() {
@@ -241,11 +245,11 @@ class PostTests {
         assertEquals(2, post.getCategories().size());
 
         // Act
-        post.removeCategory(categoryId1);
+        post.removeCategory(categoryId2);
 
         // Assert
         assertEquals(1, post.getCategories().size());
-        assertThat(post.getCategories()).containsExactlyInAnyOrder(category2);
+        assertThat(post.getCategories()).containsExactlyInAnyOrder(category1);
     }
 
     @Test
@@ -258,6 +262,7 @@ class PostTests {
         assertThrows(CannotChangeCategoryException.class, () -> post.removeCategory(categoryId1));
     }
 
+    // ===== Soft Delete Post =====
     @Test
     @DisplayName("Should soft delete post successfully")
     void testSoftDelete_Success() {
@@ -290,6 +295,7 @@ class PostTests {
         assertThrows(PostAlreadyPublishedException.class, post::softDelete);
     }
 
+    // ===== Add Comment =====
     @Test
     @DisplayName("Should add comment successfully")
     void testAddComment_Success() {
@@ -328,6 +334,7 @@ class PostTests {
         assertThrows(IllegalArgumentException.class, () -> post.addComment(null));
     }
 
+    // ===== Remove Comment =====
     @Test
     @DisplayName("Should remove comment successfully")
     void testRemoveComment_Success() {
@@ -375,6 +382,7 @@ class PostTests {
         assertThrows(PostNotPublishedException.class, () -> post.removeComment(comment.getId()));
     }
 
+    // ===== Approve Comment =====
     @Test
     @DisplayName("Should approve comment successfully when post already published")
     void testApproveComment_Success() {
@@ -430,6 +438,7 @@ class PostTests {
         assertDoesNotThrow(action);
     }
 
+    // ===== Cancel Approval Comment =====
     @Test
     @DisplayName("Should cancel comment approval successfully")
     void testCancelApprovalComment_Success() {
