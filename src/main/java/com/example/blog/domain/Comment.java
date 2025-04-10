@@ -18,6 +18,15 @@ public class Comment {
     private LocalDateTime updatedAt;
     private LocalDateTime approvedAt;
 
+    Comment(CommentId id, String content, Commenter commenter, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime approvedAt) {
+        this.id = id;
+        this.content = content;
+        this.commenter = commenter;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.approvedAt = approvedAt;
+    }
+
     public Comment(String content, Commenter commenter) {
         Assert.notNull(content, "comment content must not be null");
         Assert.notNull(commenter, "commenter must not be null");
@@ -28,6 +37,10 @@ public class Comment {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         approvedAt = null;
+    }
+
+    public static Comment reconstitute(CommentId id, String content, Commenter commenter, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime approvedAt) {
+        return new Comment(id, content, commenter, createdAt, updatedAt, approvedAt);
     }
 
     public Comment updateComment(String content) {

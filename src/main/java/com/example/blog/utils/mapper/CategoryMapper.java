@@ -1,4 +1,4 @@
-package com.example.blog.application.query.mapper;
+package com.example.blog.utils.mapper;
 
 import com.example.blog.application.query.PostDTO;
 import com.example.blog.domain.Category;
