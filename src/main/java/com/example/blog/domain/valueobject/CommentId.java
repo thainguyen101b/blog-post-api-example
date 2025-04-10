@@ -14,4 +14,8 @@ public record CommentId(UUID id) {
         this(UUID.randomUUID());
     }
 
+    public static CommentId fromUUID(UUID uuid) {
+        return new CommentId(uuid);
+    }
+
 }
