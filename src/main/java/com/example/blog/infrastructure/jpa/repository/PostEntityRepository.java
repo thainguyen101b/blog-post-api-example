@@ -6,12 +6,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface PostEntityRepository extends JpaRepository<PostEntity, UUID> {
 
-    Page<PostEntity> findByContentContaining(String content, Pageable pageable);
-
-    boolean existsByCategories_Id(UUID categoryId);
+	Optional<PostEntity> findByIdAndDeletedAtIsNull(UUID id);
+	
+    Page<PostEntity> findByContentContainingAndDeletedAtIsNull(String content, Pageable pageable);
+    Page<PostEntity> findByContentContainingAndDeletedAtIsNotNull(String content, Pageable pageable);
+    
+    Page<PostEntity> findByDeletedAtIsNull(Pageable pageable);
+    Page<PostEntity> findByDeletedAtIsNotNull(Pageable pageable);
+    
+    boolean existsByCategories_IdAndDeletedAtIsNull(UUID categoryId);
 }

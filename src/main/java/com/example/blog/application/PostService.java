@@ -8,6 +8,7 @@ import com.example.blog.domain.*;
 import com.example.blog.domain.valueobject.*;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -21,11 +22,14 @@ public class PostService {
 
     public void createPost(PostCreateCommand command) {
         // Extract categories in PostCreateCommand to a list of CategoryId
-        List<CategoryId> categoryIds = toCategoryId(command.categoryIds());
+        List<Category> existingCategories = Collections.emptyList();
+        if (command.categoryIds() != null && !command.categoryIds().isEmpty()) {
+            List<CategoryId> categoryIds = toCategoryId(command.categoryIds());
 
-        // Find category by ids and validate
-        List<Category> existingCategories = categoryRepository.findCategoryByIds(categoryIds);
-        validateCategories(existingCategories, categoryIds);
+            // Find category by ids and validate
+            existingCategories = categoryRepository.findCategoryByIds(categoryIds);
+            validateCategories(existingCategories, categoryIds);
+        }
 
         Post post = new Post(
                 command.title(),

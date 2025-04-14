@@ -15,4 +15,8 @@ public interface PostRepository {
     Page<Post> findAll(int page, int size);
 
     boolean existsByCategory(CategoryId categoryId);
+    
+    Page<Post> searchDeletedPosts(String keyword, int page, int size);
+    
+    Page<Post> findAllDeletedPosts(int page, int size);
 }
