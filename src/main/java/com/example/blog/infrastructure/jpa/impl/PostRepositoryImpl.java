@@ -21,7 +21,7 @@ public class PostRepositoryImpl implements PostRepository {
 
     @Override
     public Post findById(PostId id) {
-        PostEntity post = repository.findById(id.id())
+        PostEntity post = repository.findByIdAndDeletedAtIsNull(id.id())
                 .orElseThrow(() -> new ResourceNotFoundException(id.id()));
         return post.toDomain();
     }
@@ -36,7 +36,7 @@ public class PostRepositoryImpl implements PostRepository {
     public com.example.blog.utils.Page<Post> search(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PostEntity> postPageJpa =
-                repository.findByContentContaining(keyword, pageable);
+                repository.findByContentContainingAndDeletedAtIsNull(keyword, pageable);
         com.example.blog.utils.Page<PostEntity> postEntityPage = com.example.blog.utils.Page.of(
                 postPageJpa.getContent(),
                 page,
@@ -51,7 +51,7 @@ public class PostRepositoryImpl implements PostRepository {
     public com.example.blog.utils.Page<Post> findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PostEntity> postPageJpa =
-                repository.findAll(pageable);
+                repository.findByDeletedAtIsNull(pageable);
 
         com.example.blog.utils.Page<PostEntity> postEntityPage = com.example.blog.utils.Page.of(
                 postPageJpa.getContent(),
@@ -64,7 +64,37 @@ public class PostRepositoryImpl implements PostRepository {
 
     @Override
     public boolean existsByCategory(CategoryId categoryId) {
-        return repository.existsByCategories_Id(categoryId.id());
+        return repository.existsByCategories_IdAndDeletedAtIsNull(categoryId.id());
     }
+
+	@Override
+	public com.example.blog.utils.Page<Post> searchDeletedPosts(String keyword, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+        Page<PostEntity> postPageJpa =
+                repository.findByContentContainingAndDeletedAtIsNotNull(keyword, pageable);
+        com.example.blog.utils.Page<PostEntity> postEntityPage = com.example.blog.utils.Page.of(
+                postPageJpa.getContent(),
+                page,
+                size,
+                postPageJpa.getTotalElements()
+        );
+
+        return postEntityPage.map(PostEntity::toDomain);
+	}
+
+	@Override
+	public com.example.blog.utils.Page<Post> findAllDeletedPosts(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+        Page<PostEntity> postPageJpa =
+                repository.findByDeletedAtIsNotNull(pageable);
+
+        com.example.blog.utils.Page<PostEntity> postEntityPage = com.example.blog.utils.Page.of(
+                postPageJpa.getContent(),
+                page,
+                size,
+                postPageJpa.getTotalElements()
+        );
+        return postEntityPage.map(PostEntity::toDomain);
+	}
 
 }
