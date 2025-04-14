@@ -10,8 +10,10 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -19,23 +21,30 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 public class CommentEntity {
     @Id
+    @ToString.Include
     private UUID id;
 
     @Column(name = "content", nullable = false)
+    @ToString.Include
     private String content;
 
     @Column(name = "commenter_id", nullable = false)
+    @ToString.Include
     private String commenterId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @ToString.Include
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @ToString.Include
     private LocalDateTime updatedAt;
 
     @Column(name = "approved_at")
+    @ToString.Include
     private LocalDateTime approvedAt;
 
     public Comment toDomain() {
@@ -53,5 +62,17 @@ public class CommentEntity {
         entity.updatedAt = comment.getUpdatedAt();
         entity.approvedAt = comment.getApprovedAt();
         return entity;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CommentEntity comment = (CommentEntity) o;
+        return Objects.equals(id, comment.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }

@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,18 +21,23 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 public class PostEntity {
     @Id
+    @ToString.Include
     private UUID id;
 
     @Column(name = "title", nullable = false)
+    @ToString.Include
     private String title;
 
     @Lob
     @Column(name = "content", columnDefinition = "TEXT")
+    @ToString.Include
     private String content;
 
     @Column(name = "author_id", nullable = false)
+    @ToString.Include
     private String authorId;
 
     @ManyToMany
@@ -47,18 +53,23 @@ public class PostEntity {
     private List<CommentEntity> comments = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @ToString.Include
     private LocalDateTime createdAt;
 
     @Column(name = "slug", unique = true)
+    @ToString.Include
     private String slug;
 
     @Column(name = "published_at")
+    @ToString.Include
     private LocalDateTime publishedAt;
 
     @Column(name = "updated_at")
+    @ToString.Include
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
+    @ToString.Include
     private LocalDateTime deletedAt;
 
     public static PostEntity fromDomain(Post post) {
